@@ -4,6 +4,7 @@ src/
 examples/
 temp/
 tsconfig.json
+vite.config.js
 
 # mac
 .DS_Store
