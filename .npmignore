@@ -1,0 +1,9 @@
+.github/
+logo/
+src/
+examples/
+temp/
+tsconfig.json
+
+# mac
+.DS_Store
