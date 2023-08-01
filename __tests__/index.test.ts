@@ -9,23 +9,23 @@ describe('getPngInfo(JSON) function', () => {
         const result = await getPngInfo(buf, options);
         const parsedJson = JSON.parse(result);
 
-        expect(parsedJson).toHaveProperty('Sampler');
+        expect(parsedJson).toHaveProperty('sampler');
 
-        expect(parsedJson).toHaveProperty('CFG scale');
-        expect(isNaN(parseFloat(parsedJson['CFG scale']))).toBe(false)
+        expect(parsedJson).toHaveProperty('cfgScale');
+        expect(isNaN(parseFloat(parsedJson.cfgScale))).toBe(false)
 
-        expect(parsedJson).toHaveProperty('Seed');
-        expect(isNaN(parseFloat(parsedJson['Seed']))).toBe(false)
+        expect(parsedJson).toHaveProperty('seed');
+        expect(isNaN(parseFloat(parsedJson.seed))).toBe(false)
 
-        expect(parsedJson).toHaveProperty('Size');
-        expect(parsedJson.Size).toMatch(/^\d+x\d+$/);
+        expect(parsedJson).toHaveProperty('size');
+        expect(parsedJson.size).toMatch(/^\d+x\d+$/);
 
-        expect(parsedJson).toHaveProperty('Model hash');
+        expect(parsedJson).toHaveProperty('modelHash');
 
-        expect(parsedJson).toHaveProperty('Model');
+        expect(parsedJson).toHaveProperty('model');
 
         // Check to Lora hashes
-        const loraHashes = parsedJson["Lora hashes"];
+        const loraHashes = parsedJson.loraHashes;
         expect(Array.isArray(loraHashes)).toBe(true);
         loraHashes.forEach(hash => {
             expect(typeof hash).toBe("object");
@@ -37,17 +37,17 @@ describe('getPngInfo(JSON) function', () => {
             expect(values.length).toBe(1);
         });
 
-        expect(parsedJson).toHaveProperty('Version');
+        expect(parsedJson).toHaveProperty('version');
 
         // Check to prompt
-        const prompt = parsedJson["Prompt"];
+        const prompt = parsedJson.prompt;
         expect(Array.isArray(prompt)).toBe(true);
         prompt.forEach(word => {
             expect(typeof word).toBe("string");
         });
 
         // Check to Negative prompt
-        const negativePrompt = parsedJson["Negative prompt"];
+        const negativePrompt = parsedJson.negativePrompt;
         expect(Array.isArray(negativePrompt)).toBe(true);
         prompt.forEach(word => {
             expect(typeof word).toBe("string");

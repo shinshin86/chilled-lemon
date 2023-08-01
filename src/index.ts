@@ -4,6 +4,20 @@ interface Options {
     format?: FormatOptions;
 }
 
+const keyMapping = {
+    "Steps": "steps",
+    "Sampler": "sampler",
+    "CFG scale": "cfgScale",
+    "Seed": "seed",
+    "Size": "size",
+    "Model hash": "modelHash",
+    "Model": "model",
+    "Lora hashes": "loraHashes",
+    "Version": "version",
+    "Prompt": "prompt",
+    "Negative prompt": "negativePrompt"
+}
+
 export async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<string> {
     const buffer = new Uint8Array(arrayBuffer);
     const fileSignature = buffer.slice(0, 8);
@@ -111,16 +125,16 @@ async function getPngInfoJson(infoString: string): Promise<string> {
                         const [loraKey, loraValue] = part.split(': ');
                         loraHashes.push({ [loraKey]: loraValue });
                     }
-                    data[key] = loraHashes;
+                    data[keyMapping[key]] = loraHashes;
                 } else {
-                    data[key] = value;
+                    data[keyMapping[key]] = value;
                 }
             }
         }
     }
 
-    data["Prompt"] = prompt.trim().split(',').map(item => item.trim()).filter(item => item);
-    data["Negative prompt"] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
+    data[keyMapping["Prompt"]] = prompt.trim().split(',').map(item => item.trim()).filter(item => item);
+    data[keyMapping["Negative prompt"]] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
 
     return JSON.stringify(data);
 }
