@@ -95,21 +95,32 @@ async function getPngInfoJson(infoString: string): Promise<string> {
         }
 
         if (phase === 2) {
-            let matchData;
-            while ((matchData = re.exec(line)) !== null) {
-                const [_, word] = matchData;
-                const re2 = /([A-Z][a-zA-Z0-9 ]*): ([^,]+)(, )?/g;
-                let matchData2;
-                while ((matchData2 = re2.exec(word)) !== null) {
-                    const [_, name, value] = matchData2;
-                    data[name] = value;
+            let re = /([a-zA-Z\s]+):\s*("[^"]+"|[^,]+)/g;
+            let match;
+
+            while ((match = re.exec(line)) !== null) {
+                let key = match[1].trim();
+                let value = match[2].trim();
+                if (value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+                    value = value.slice(1, -1);
+                }
+                if (key === 'Lora hashes') {
+                    const loraHashes = [];
+                    const loraHashesParts = value.split(', ');
+                    for (const part of loraHashesParts) {
+                        const [loraKey, loraValue] = part.split(': ');
+                        loraHashes.push({ [loraKey]: loraValue });
+                    }
+                    data[key] = loraHashes;
+                } else {
+                    data[key] = value;
                 }
             }
         }
     }
 
-    data["Prompt"] = prompt.trim();
-    data["Negative prompt"] = negativePrompt.trim();
+    data["Prompt"] = prompt.trim().split(',').map(item => item.trim()).filter(item => item);
+    data["Negative prompt"] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
 
     return JSON.stringify(data);
 }
