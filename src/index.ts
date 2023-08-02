@@ -18,7 +18,25 @@ const keyMapping = {
     "Negative prompt": "negativePrompt"
 }
 
-export async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<string> {
+type LoraHash = {
+    [key: string]: string
+}
+
+type PngInfoObject = {
+    steps: number,
+    sampler: string,
+    cfgScale: number,
+    seed: number,
+    size: string,
+    modelHash: string,
+    model: string,
+    loraHashes: Array<LoraHash>,
+    version: string,
+    prompt: Array<string>,
+    negativePrompt: Array<string>
+}
+
+export async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<PngInfoObject | string>{
     const buffer = new Uint8Array(arrayBuffer);
     const fileSignature = buffer.slice(0, 8);
 
@@ -71,12 +89,12 @@ export async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): P
     }
 }
 
-async function getPngInfoJson(infoString: string): Promise<string> {
+async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
     const lines = infoString.split("\n");
     let phase = 0;
     let prompt = "";
     let negativePrompt = "";
-    const data = {};
+    const data: Partial<PngInfoObject> = {};
 
     const NEGATIVE_PROMPT_PREFIX_LENGTH = 17;
     const NEGATIVE_PROMPT_PREFIX_STRING = "Negative prompt: ";
@@ -136,5 +154,5 @@ async function getPngInfoJson(infoString: string): Promise<string> {
     data[keyMapping["Prompt"]] = prompt.trim().split(',').map(item => item.trim()).filter(item => item);
     data[keyMapping["Negative prompt"]] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
 
-    return JSON.stringify(data);
+    return data as PngInfoObject;
 }
