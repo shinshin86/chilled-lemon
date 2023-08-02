@@ -62,8 +62,8 @@ UMD
             try {
                 const outputElement = document.getElementById('output');
 
-                const jsonOutput = await getPngInfo(arrayBuffer);
-                outputElement.textContent = '===PNG INFO (JSON)===\n' + jsonOutput;
+                const pngInfoObj = await getPngInfo(arrayBuffer);
+                outputElement.textContent = '===PNG INFO (JSON)===\n' + JSON.stringify(pngInfoObj);
 
                 const textOutput = await getPngInfo(arrayBuffer, { format: 'text' });
                 outputElement.textContent += '\n\n===PNG INFO===\n' + textOutput;
