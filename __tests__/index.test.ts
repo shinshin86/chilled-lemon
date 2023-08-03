@@ -2,7 +2,7 @@ import { getPngInfo, getOriginalKeyNames, PngInfoObject, OriginalKeyPngInfoObjec
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-describe('getPngInfo(JSON) function', () => {
+describe('getPngInfo', () => {
     it('should correctly parse a json string', async () => {
         const buf = await readFile(path.join(__dirname, "test-image.png"));
         const result = await getPngInfo(buf);
