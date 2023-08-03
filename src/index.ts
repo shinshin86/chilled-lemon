@@ -22,7 +22,7 @@ type LoraHash = {
     [key: string]: string
 }
 
-type PngInfoObject = {
+export type PngInfoObject = {
     steps: number,
     sampler: string,
     cfgScale: number,
@@ -36,7 +36,21 @@ type PngInfoObject = {
     negativePrompt: Array<string>
 }
 
-export async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<PngInfoObject | string>{
+export type OriginalKeyPngInfoObject = {
+    "Steps": number,
+    "Sampler": string,
+    "CFG scale": number,
+    "Seed": number,
+    "Size": string,
+    "Model hash": string,
+    "Model": string,
+    "Lora hashes": Array<LoraHash>,
+    "Version": string,
+    "Prompt": Array<string>,
+    "Negative prompt": Array<string>,
+}
+
+export async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<PngInfoObject | string> {
     const buffer = new Uint8Array(arrayBuffer);
     const fileSignature = buffer.slice(0, 8);
 
@@ -155,4 +169,22 @@ async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
     data[keyMapping["Negative prompt"]] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
 
     return data as PngInfoObject;
+}
+
+export function getOriginalKeyNames(obj: PngInfoObject): OriginalKeyPngInfoObject {
+    const reversedKeyMapping: { [key: string]: string } = Object.keys(keyMapping).reduce((acc: { [key: string]: string }, key: string) => {
+        acc[keyMapping[key]] = key;
+        return acc;
+    }, {})
+
+    const newObj: Partial<OriginalKeyPngInfoObject> = {};
+    for (const key in obj) {
+        if (reversedKeyMapping[key]) {
+            newObj[reversedKeyMapping[key]] = obj[key];
+        } else {
+            newObj[key] = obj[key];
+        }
+    }
+
+    return newObj as OriginalKeyPngInfoObject;
 }
