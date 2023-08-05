@@ -1,8 +1,10 @@
 .github/
+__test__/
 logo/
 src/
 examples/
 temp/
+jest.config.js
 tsconfig.json
 vite.config.js
 
