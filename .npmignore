@@ -1,5 +1,5 @@
 .github/
-__test__/
+__tests__/
 logo/
 src/
 examples/
