@@ -4,7 +4,53 @@ interface Options {
     format?: FormatOptions;
 }
 
-export async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<string> {
+const keyMapping = {
+    "Steps": "steps",
+    "Sampler": "sampler",
+    "CFG scale": "cfgScale",
+    "Seed": "seed",
+    "Size": "size",
+    "Model hash": "modelHash",
+    "Model": "model",
+    "Lora hashes": "loraHashes",
+    "Version": "version",
+    "Prompt": "prompt",
+    "Negative prompt": "negativePrompt"
+}
+
+type LoraHash = {
+    [key: string]: string
+}
+
+type PngInfoObject = {
+    steps: number,
+    sampler: string,
+    cfgScale: number,
+    seed: number,
+    size: string,
+    modelHash: string,
+    model: string,
+    loraHashes: Array<LoraHash>,
+    version: string,
+    prompt: Array<string>,
+    negativePrompt: Array<string>
+}
+
+type OriginalKeyPngInfoObject = {
+    "Steps": number,
+    "Sampler": string,
+    "CFG scale": number,
+    "Seed": number,
+    "Size": string,
+    "Model hash": string,
+    "Model": string,
+    "Lora hashes": Array<LoraHash>,
+    "Version": string,
+    "Prompt": Array<string>,
+    "Negative prompt": Array<string>,
+}
+
+async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<PngInfoObject | string> {
     const buffer = new Uint8Array(arrayBuffer);
     const fileSignature = buffer.slice(0, 8);
 
@@ -57,12 +103,12 @@ export async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): P
     }
 }
 
-async function getPngInfoJson(infoString: string): Promise<string> {
+async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
     const lines = infoString.split("\n");
     let phase = 0;
     let prompt = "";
     let negativePrompt = "";
-    const data = {};
+    const data: Partial<PngInfoObject> = {};
 
     const NEGATIVE_PROMPT_PREFIX_LENGTH = 17;
     const NEGATIVE_PROMPT_PREFIX_STRING = "Negative prompt: ";
@@ -95,21 +141,58 @@ async function getPngInfoJson(infoString: string): Promise<string> {
         }
 
         if (phase === 2) {
-            let matchData;
-            while ((matchData = re.exec(line)) !== null) {
-                const [_, word] = matchData;
-                const re2 = /([A-Z][a-zA-Z0-9 ]*): ([^,]+)(, )?/g;
-                let matchData2;
-                while ((matchData2 = re2.exec(word)) !== null) {
-                    const [_, name, value] = matchData2;
-                    data[name] = value;
+            let re = /([a-zA-Z\s]+):\s*("[^"]+"|[^,]+)/g;
+            let match;
+
+            while ((match = re.exec(line)) !== null) {
+                let key = match[1].trim();
+                let value = match[2].trim();
+                if (value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+                    value = value.slice(1, -1);
+                }
+                if (key === 'Lora hashes') {
+                    const loraHashes = [];
+                    const loraHashesParts = value.split(', ');
+                    for (const part of loraHashesParts) {
+                        const [loraKey, loraValue] = part.split(': ');
+                        loraHashes.push({ [loraKey]: loraValue });
+                    }
+                    data[keyMapping[key]] = loraHashes;
+                } else {
+                    data[keyMapping[key]] = value;
                 }
             }
         }
     }
 
-    data["Prompt"] = prompt.trim();
-    data["Negative prompt"] = negativePrompt.trim();
+    data[keyMapping["Prompt"]] = prompt.trim().split(',').map(item => item.trim()).filter(item => item);
+    data[keyMapping["Negative prompt"]] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
 
-    return JSON.stringify(data);
+    return data as PngInfoObject;
+}
+
+function getOriginalKeyNames(obj: PngInfoObject): OriginalKeyPngInfoObject {
+    const reversedKeyMapping: { [key: string]: string } = Object.keys(keyMapping).reduce((acc: { [key: string]: string }, key: string) => {
+        acc[keyMapping[key]] = key;
+        return acc;
+    }, {})
+
+    const newObj: Partial<OriginalKeyPngInfoObject> = {};
+    for (const key in obj) {
+        if (reversedKeyMapping[key]) {
+            newObj[reversedKeyMapping[key]] = obj[key];
+        } else {
+            newObj[key] = obj[key];
+        }
+    }
+
+    return newObj as OriginalKeyPngInfoObject;
+}
+
+export {
+    getPngInfo,
+    getOriginalKeyNames,
+    PngInfoObject,
+    OriginalKeyPngInfoObject,
+    LoraHash,
 }
