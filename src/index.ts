@@ -194,4 +194,5 @@ export {
     getOriginalKeyNames,
     PngInfoObject,
     OriginalKeyPngInfoObject,
+    LoraHash,
 }

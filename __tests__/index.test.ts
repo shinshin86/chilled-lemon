@@ -1,4 +1,4 @@
-import { getPngInfo, getOriginalKeyNames, PngInfoObject, OriginalKeyPngInfoObject } from '../src/index';
+import { getPngInfo, getOriginalKeyNames, PngInfoObject, OriginalKeyPngInfoObject, LoraHash } from '../src/index';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -122,6 +122,7 @@ describe('getPngInfo', () => {
 
 describe('getOriginalKeyNames', () => {
     it('should correctly map keys of the PngInfoObject to original keys', () => {
+        const loraHashes: Array<LoraHash> = [{ test1: "aaaaaaaaaaaa" }, { test2: "aaaaaaaaaaaa" }];
         const pngInfo: PngInfoObject = {
             steps: 30,
             sampler: "test",
@@ -130,7 +131,7 @@ describe('getOriginalKeyNames', () => {
             size: "512x512",
             modelHash: "aaaaaaaaaa",
             model: "testModel",
-            loraHashes: [{ test1: "aaaaaaaaaaaa" }, { test2: "aaaaaaaaaaaa" }],
+            loraHashes,
             version: "v1.5.0",
             prompt: ["prompt1", "prompt2", "<lora:test1:1.35>", "<lora:test2:1.7>"],
             negativePrompt: ["negativePrompt1", "negativePrompt2"]
@@ -154,6 +155,7 @@ describe('getOriginalKeyNames', () => {
     });
 
     it('should not change keys that do not exist in keyMapping', () => {
+        const loraHashes: Array<LoraHash> = [{ test1: "aaaaaaaaaaaa" }, { test2: "aaaaaaaaaaaa" }];
         const pngInfo: PngInfoObject & { extraKey: string } = {
             steps: 30,
             sampler: "test",
@@ -162,7 +164,7 @@ describe('getOriginalKeyNames', () => {
             size: "512x512",
             modelHash: "aaaaaaaaaa",
             model: "testModel",
-            loraHashes: [{ test1: "aaaaaaaaaaaa" }, { test2: "aaaaaaaaaaaa" }],
+            loraHashes,
             version: "v1.5.0",
             prompt: ["prompt1", "prompt2", "<lora:test1:1.35>", "<lora:test2:1.7>"],
             negativePrompt: ["negativePrompt1", "negativePrompt2"],
