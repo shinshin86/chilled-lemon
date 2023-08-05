@@ -58,7 +58,7 @@ describe('getPngInfo', () => {
         }
     })
 
-    it('should correctly parse a json string', async () => {
+    it('should correctly parse a json string (format option: json)', async () => {
         const buf = await readFile(path.join(__dirname, "test-image.png"));
         const result = await getPngInfo(buf, { format: 'json' });
         expect(typeof result).toBe('object');
