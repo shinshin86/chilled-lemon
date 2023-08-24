@@ -4,23 +4,12 @@ interface Options {
     format?: FormatOptions;
 }
 
-const keyMapping = {
-    "Steps": "steps",
-    "Sampler": "sampler",
-    "CFG scale": "cfgScale",
-    "Seed": "seed",
-    "Size": "size",
-    "Model hash": "modelHash",
-    "Model": "model",
-    "Lora hashes": "loraHashes",
-    "Version": "version",
-    "Prompt": "prompt",
-    "Negative prompt": "negativePrompt"
-}
+const keyMapping = {}
 
 type LoraHash = {
     [key: string]: string
 }
+
 
 type PngInfoObject = {
     steps: number,
@@ -34,6 +23,8 @@ type PngInfoObject = {
     version: string,
     prompt: Array<string>,
     negativePrompt: Array<string>
+    // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
+    [key: string]: any,
 }
 
 type OriginalKeyPngInfoObject = {
@@ -48,6 +39,8 @@ type OriginalKeyPngInfoObject = {
     "Version": string,
     "Prompt": Array<string>,
     "Negative prompt": Array<string>,
+    // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
+    [key: string]: any,
 }
 
 async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<PngInfoObject | string> {
@@ -147,9 +140,11 @@ async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
             while ((match = re.exec(line)) !== null) {
                 let key = match[1].trim();
                 let value = match[2].trim();
+
                 if (value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
                     value = value.slice(1, -1);
                 }
+
                 if (key === 'Lora hashes') {
                     const loraHashes = [];
                     const loraHashesParts = value.split(', ');
@@ -157,23 +152,32 @@ async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
                         const [loraKey, loraValue] = part.split(': ');
                         loraHashes.push({ [loraKey]: loraValue });
                     }
-                    data[keyMapping[key]] = loraHashes;
+                    data[convertToCamelCase(key)] = loraHashes;
+                } else if (key === 'TI hashes') {
+                    const tiHashes = [];
+                    const tiHashesParts = value.split(', ');
+                    for (const part of tiHashesParts) {
+                        const [tiKey, tiValue] = part.split(': ');
+                        tiHashes.push({ [tiKey]: tiValue });
+                    }
+                    data[convertToCamelCase(key)] = tiHashes;
                 } else {
-                    data[keyMapping[key]] = value;
+                    data[convertToCamelCase(key)] = value;
                 }
             }
         }
     }
 
-    data[keyMapping["Prompt"]] = prompt.trim().split(',').map(item => item.trim()).filter(item => item);
-    data[keyMapping["Negative prompt"]] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
+    data[convertToCamelCase("Prompt")] = prompt.trim().split(',').map(item => item.trim()).filter(item => item);
+    data[convertToCamelCase("Negative prompt")] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
 
     return data as PngInfoObject;
 }
 
 function getOriginalKeyNames(obj: PngInfoObject): OriginalKeyPngInfoObject {
     const reversedKeyMapping: { [key: string]: string } = Object.keys(keyMapping).reduce((acc: { [key: string]: string }, key: string) => {
-        acc[keyMapping[key]] = key;
+        const camelCasedKey = convertToCamelCase(key)
+        acc[camelCasedKey] = key;
         return acc;
     }, {})
 
@@ -187,6 +191,23 @@ function getOriginalKeyNames(obj: PngInfoObject): OriginalKeyPngInfoObject {
     }
 
     return newObj as OriginalKeyPngInfoObject;
+}
+
+function convertToCamelCase(input: string): string {
+    if (!keyMapping[input]) {
+        const convertedInput = input
+            .split(' ')
+            .map((word, index) =>
+                index === 0
+                    ? word.toLowerCase()
+                    : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join('');
+
+        // store keyMapping
+        keyMapping[input] = convertedInput;
+    }
+
+    return keyMapping[input];
 }
 
 export {
