@@ -134,7 +134,35 @@ describe('getOriginalKeyNames', () => {
             loraHashes,
             version: "v1.5.0",
             prompt: ["prompt1", "prompt2", "<lora:test1:1.35>", "<lora:test2:1.7>"],
-            negativePrompt: ["negativePrompt1", "negativePrompt2"]
+            negativePrompt: ["negativePrompt1", "negativePrompt2"],
+            controlNetList: [
+                {
+                  key: 'ControlNet 0',
+                  module: 'controlnet_module',
+                  model: 'controlnet_model [abcdef12]',
+                  weight: '1',
+                  resizeMode: 'Crop and Resize',
+                  lowVram: 'False',
+                  processorRes: 512,
+                  guidanceStart: '0',
+                  guidanceEnd: '1',
+                  pixelPerfect: false,
+                  controlMode: 'Balanced'
+                },
+                {
+                  key: 'ControlNet 1',
+                  module: 'controlnet_module',
+                  model: 'controlnet_model [abcdef12]',
+                  weight: '1',
+                  resizeMode: 'Crop and Resize',
+                  lowVram: 'False',
+                  processorRes: 512,
+                  guidanceStart: '0',
+                  guidanceEnd: '1',
+                  pixelPerfect: true,
+                  controlMode: 'Balanced'
+                },
+              ]
         };
 
         const expected: OriginalKeyPngInfoObject = {
@@ -148,7 +176,31 @@ describe('getOriginalKeyNames', () => {
             "Lora hashes": [{ test1: "aaaaaaaaaaaa" }, { test2: "aaaaaaaaaaaa" }],
             "Version": "v1.5.0",
             "Prompt": ["prompt1", "prompt2", "<lora:test1:1.35>", "<lora:test2:1.7>"],
-            "Negative prompt": ["negativePrompt1", "negativePrompt2"]
+            "Negative prompt": ["negativePrompt1", "negativePrompt2"],
+            "ControlNet 0": {
+                "Module": "controlnet_module",
+                "Model": "controlnet_model [abcdef12]",
+                "Weight": "1",
+                "Resize Mode": "Crop and Resize",
+                "Low Vram": "False",
+                "Processor Res": 512,
+                "Guidance Start": "0",
+                "Guidance End": "1",
+                "Pixel Perfect": false,
+                "Control Mode": "Balanced"
+            },
+            "ControlNet 1": {
+                "Module": "controlnet_module",
+                "Model": "controlnet_model [abcdef12]",
+                "Weight": "1",
+                "Resize Mode": "Crop and Resize",
+                "Low Vram": "False",
+                "Processor Res": 512,
+                "Guidance Start": "0",
+                "Guidance End": "1",
+                "Pixel Perfect": true,
+                "Control Mode": "Balanced"
+            }
         };
 
         expect(getOriginalKeyNames(pngInfo)).toEqual(expected);

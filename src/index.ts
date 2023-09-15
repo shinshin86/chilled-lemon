@@ -6,6 +6,19 @@ interface Options {
 
 const keyMapping = {}
 
+const controlNetKeyMapping = {
+    module: "Module",
+    model: "Model",
+    weight: "Weight",
+    resizeMode: "Resize Mode",
+    lowVram: "Low Vram",
+    processorRes: "Processor Res",
+    guidanceStart: "Guidance Start",
+    guidanceEnd: "Guidance End",
+    pixelPerfect: "Pixel Perfect",
+    controlMode: "Control Mode",
+}
+
 type LoraHash = {
     [key: string]: string
 }
@@ -22,7 +35,8 @@ type PngInfoObject = {
     loraHashes: Array<LoraHash>,
     version: string,
     prompt: Array<string>,
-    negativePrompt: Array<string>
+    negativePrompt: Array<string>,
+    controlNetList?: Array<Partial<ControlNetInfoObject>>,
     // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
     [key: string]: any,
 }
@@ -42,6 +56,32 @@ type OriginalKeyPngInfoObject = {
     // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
     [key: string]: any,
 }
+
+type ControlNetInfoObject = {
+    key: string, // ControlNet 0, ControlNet 1...
+    module: string,
+    model: string,
+    weight: string,
+    resizeMode: string,
+    lowVram: string,
+    processorRes: number,
+    guidanceStart: string,
+    guidanceEnd: string,
+    pixelPerfect: boolean,
+    controlMode: string,
+    // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
+    [key: string]: any,
+}
+
+/**
+ * This function converts a Python boolean string ("True" or "False") to a JavaScript boolean type.
+ */
+function pythonBoolToJsBool(str: string): boolean | null {
+    if (typeof str !== 'string') {
+      return null;
+    }
+    return str.toLowerCase() === "true" ? true : str.toLowerCase() === "false" ? false : null;
+  }
 
 async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<PngInfoObject | string> {
     const buffer = new Uint8Array(arrayBuffer);
@@ -101,7 +141,8 @@ async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
     let phase = 0;
     let prompt = "";
     let negativePrompt = "";
-    const data: Partial<PngInfoObject> = {};
+    let controlNetList: Array<Partial<ControlNetInfoObject>> = [];
+    let data: Partial<PngInfoObject> = {};
 
     const NEGATIVE_PROMPT_PREFIX_LENGTH = 17;
     const NEGATIVE_PROMPT_PREFIX_STRING = "Negative prompt: ";
@@ -134,7 +175,7 @@ async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
         }
 
         if (phase === 2) {
-            let re = /([a-zA-Z\s]+):\s*("[^"]+"|[^,]+)/g;
+            let re = /([a-zA-Z0-9\s]+):\s*("[^"]+"|[^,]+)/g;
             let match;
 
             while ((match = re.exec(line)) !== null) {
@@ -161,6 +202,31 @@ async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
                         tiHashes.push({ [tiKey]: tiValue });
                     }
                     data[convertToCamelCase(key)] = tiHashes;
+                } else if(key.startsWith("ControlNet")) {
+                    const controlNetObj: Partial<ControlNetInfoObject> = { key }
+
+                    let controlNetRe = /([a-zA-Z0-9\s]+):\s*("[^"]+"|[^,]+)/g;
+                    let controlNetMatch = controlNetRe.exec(value);
+                    while(controlNetMatch !== null) {
+                        const controlNetKey = controlNetMatch[1].trim();
+                        const controlNetValue = controlNetMatch[2].trim();
+
+                        if(controlNetKey === "Processor Res") {
+                            controlNetObj[convertToCamelCase(controlNetKey)] = Number(controlNetValue);
+                        } else if (controlNetKey === "Pixel Perfect") {
+                            const jsBool = pythonBoolToJsBool(controlNetValue);
+
+                            if(jsBool !== null) {
+                                controlNetObj[convertToCamelCase(controlNetKey)] = jsBool;
+                            }
+                        } else {
+                            controlNetObj[convertToCamelCase(controlNetKey)] = controlNetValue;
+                        }
+
+                        controlNetMatch = controlNetRe.exec(value);
+                    }
+
+                    controlNetList.push(controlNetObj);
                 } else {
                     data[convertToCamelCase(key)] = value;
                 }
@@ -170,6 +236,10 @@ async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
 
     data[convertToCamelCase("Prompt")] = prompt.trim().split(',').map(item => item.trim()).filter(item => item);
     data[convertToCamelCase("Negative prompt")] = negativePrompt.trim().split(',').map(item => item.trim()).filter(item => item);
+
+    if(controlNetList?.length > 0) {
+        data = {...data, controlNetList}
+    }
 
     return data as PngInfoObject;
 }
@@ -188,6 +258,25 @@ function getOriginalKeyNames(obj: PngInfoObject): OriginalKeyPngInfoObject {
         } else {
             newObj[key] = obj[key];
         }
+    }
+
+     // Handling controlNetList transformation
+     if (newObj.controlNetList) {
+        obj.controlNetList.forEach((controlNet: ControlNetInfoObject) => {
+            const controlNetObj: { [key: string]: any } = {};
+            for (const controlNetKey in controlNet) {
+                // The item "key" is not necessary
+                if (controlNetKey === "key") {
+                    continue;
+                }
+
+                controlNetObj[controlNetKeyMapping[controlNetKey]] = controlNet[controlNetKey];
+            }
+            newObj[controlNet.key] = controlNetObj;
+        });
+
+        // Removing the original controlNetList property as it is not needed in the new object
+        delete newObj.controlNetList;
     }
 
     return newObj as OriginalKeyPngInfoObject;
