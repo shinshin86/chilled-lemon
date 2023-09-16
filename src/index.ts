@@ -83,13 +83,28 @@ function pythonBoolToJsBool(str: string): boolean | null {
     return str.toLowerCase() === "true" ? true : str.toLowerCase() === "false" ? false : null;
   }
 
+
+/**
+ * @deprecated Use `getInfotext` or `getInfotextJson` instead.
+ */
 async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<PngInfoObject | string> {
+    const infotext = await getInfotext(arrayBuffer);
+
+    const isFormatJson = !options || !options.format || options.format === 'json';
+    if (isFormatJson) {
+        return getPngInfoJson(infotext);
+    } else if (options.format === 'text') {
+        return infotext;
+    }
+}
+
+async function getInfotext(arrayBuffer: ArrayBuffer): Promise<string> {
     const buffer = new Uint8Array(arrayBuffer);
     const fileSignature = buffer.slice(0, 8);
 
     const pngSignature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
     const crcSize = 4;
-    let infoString = "";
+    let infotext = "";
 
     if (!fileSignature.every((value, index) => value === pngSignature[index])) {
         return "";
@@ -117,7 +132,7 @@ async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<
                 }
 
                 // Decode data
-                infoString = chunkType === 'tEXt' ? new TextDecoder("iso-8859-1").decode(data) : new TextDecoder("utf-8").decode(data);
+                infotext = chunkType === 'tEXt' ? new TextDecoder("iso-8859-1").decode(data) : new TextDecoder("utf-8").decode(data);
                 break;
             }
         } else {
@@ -127,13 +142,13 @@ async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<
         position += crcSize;
     }
 
+    return infotext
+}
 
-    const isFormatJson = !options || !options.format || options.format === 'json';
-    if (isFormatJson) {
-        return getPngInfoJson(infoString);
-    } else if (options.format === 'text') {
-        return infoString;
-    }
+async function getInfotextJson(arrayBuffer: ArrayBuffer): Promise<PngInfoObject> {
+    const infotext = await getInfotext(arrayBuffer);
+
+    return getPngInfoJson(infotext);
 }
 
 async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
@@ -301,6 +316,8 @@ function convertToCamelCase(input: string): string {
 
 export {
     getPngInfo,
+    getInfotext,
+    getInfotextJson,
     getOriginalKeyNames,
     PngInfoObject,
     OriginalKeyPngInfoObject,
