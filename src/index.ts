@@ -1,9 +1,3 @@
-type FormatOptions = 'json' | 'text';
-
-interface Options {
-    format?: FormatOptions;
-}
-
 // Values that are always used are stored from the beginning
 const keyMapping = {
     negativePrompt: "Negative prompt",
@@ -17,24 +11,9 @@ const keyMapping = {
     version: "Version",
 }
 
-// Values that are always used are stored from the beginning
-const controlNetKeyMapping = {
-    module: "Module",
-    model: "Model",
-    weight: "Weight",
-    resizeMode: "Resize Mode",
-    lowVram: "Low Vram",
-    processorRes: "Processor Res",
-    guidanceStart: "Guidance Start",
-    guidanceEnd: "Guidance End",
-    pixelPerfect: "Pixel Perfect",
-    controlMode: "Control Mode",
-}
-
 type LoraHash = {
     [key: string]: string
 }
-
 
 type PngInfoObject = {
     steps: number,
@@ -49,22 +28,6 @@ type PngInfoObject = {
     prompt: Array<string>,
     negativePrompt: Array<string>,
     controlNetList?: Array<Partial<ControlNetInfoObject>>,
-    // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
-    [key: string]: any,
-}
-
-type OriginalKeyPngInfoObject = {
-    "Steps": number,
-    "Sampler": string,
-    "CFG scale": number,
-    "Seed": number,
-    "Size": string,
-    "Model hash": string,
-    "Model": string,
-    "Lora hashes": Array<LoraHash>,
-    "Version": string,
-    "Prompt": Array<string>,
-    "Negative prompt": Array<string>,
     // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
     [key: string]: any,
 }
@@ -94,21 +57,6 @@ function pythonBoolToJsBool(str: string): boolean | null {
     }
     return str.toLowerCase() === "true" ? true : str.toLowerCase() === "false" ? false : null;
   }
-
-
-/**
- * @deprecated Use `getInfotext` or `getInfotextJson` instead.
- */
-async function getPngInfo(arrayBuffer: ArrayBuffer, options?: Options): Promise<PngInfoObject | string> {
-    const infotext = await getInfotext(arrayBuffer);
-
-    const isFormatJson = !options || !options.format || options.format === 'json';
-    if (isFormatJson) {
-        return getPngInfoJson(infotext);
-    } else if (options.format === 'text') {
-        return infotext;
-    }
-}
 
 async function getInfotext(arrayBuffer: ArrayBuffer): Promise<string> {
     const buffer = new Uint8Array(arrayBuffer);
@@ -271,44 +219,6 @@ function getPngInfoJson(infoString: string): PngInfoObject {
     return data as PngInfoObject;
 }
 
-function getOriginalKeyNames(obj: PngInfoObject): OriginalKeyPngInfoObject {
-    const reversedKeyMapping: { [key: string]: string } = Object.keys(keyMapping).reduce((acc: { [key: string]: string }, key: string) => {
-        const camelCasedKey = convertToCamelCase(key)
-        acc[camelCasedKey] = key;
-        return acc;
-    }, {})
-
-    const newObj: Partial<OriginalKeyPngInfoObject> = {};
-    for (const key in obj) {
-        if (reversedKeyMapping[key]) {
-            newObj[reversedKeyMapping[key]] = obj[key];
-        } else {
-            newObj[key] = obj[key];
-        }
-    }
-
-     // Handling controlNetList transformation
-     if (newObj.controlNetList) {
-        obj.controlNetList.forEach((controlNet: ControlNetInfoObject) => {
-            const controlNetObj: { [key: string]: any } = {};
-            for (const controlNetKey in controlNet) {
-                // The item "key" is not necessary
-                if (controlNetKey === "key") {
-                    continue;
-                }
-
-                controlNetObj[controlNetKeyMapping[controlNetKey]] = controlNet[controlNetKey];
-            }
-            newObj[controlNet.key] = controlNetObj;
-        });
-
-        // Removing the original controlNetList property as it is not needed in the new object
-        delete newObj.controlNetList;
-    }
-
-    return newObj as OriginalKeyPngInfoObject;
-}
-
 function convertToCamelCase(input: string): string {
     if (!keyMapping[input]) {
         const convertedInput = input
@@ -359,13 +269,10 @@ function convertJsonToInfotext(json: PngInfoObject): string {
 }
 
 export {
-    getPngInfo,
     getInfotext,
     getInfotextJson,
-    getOriginalKeyNames,
     convertInfotextToJson,
     convertJsonToInfotext,
     PngInfoObject,
-    OriginalKeyPngInfoObject,
     LoraHash,
 }
