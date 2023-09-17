@@ -109,6 +109,18 @@ const convertedInfotext = await convertJsonToInfotext(json);
 console.log(convertedInfotext);
 ```
 
+## Development
+
+### Code formatter
+
+We are currently utilizing "deno fmt" as our code formatter. In order to use this, developers will need to have Deno installed on their PC.
+
+At the moment, I am the sole developer working on this project, which is why I chose "deno fmt".  
+it allows for easy code formatting without the necessity to include dependent packages in the project.
+
+In the future, should we expand our team and if other developers express a preference for a different formatter, I am open to discussions and would appreciate if the suggestions are raised as issues for consideration.
+
+
 ## inspired
 
 The idea for this source code was inspired by [this blog post (Japanese post)](https://qiita.com/javacommons/items/472e85be1b11098172b3).
