@@ -4,8 +4,20 @@ interface Options {
     format?: FormatOptions;
 }
 
-const keyMapping = {}
+// Values that are always used are stored from the beginning
+const keyMapping = {
+    negativePrompt: "Negative prompt",
+    steps: "Steps",
+    sampler: "Sampler",
+    cfgScale: "CFG scale",
+    seed: "Seed",
+    size: "Size",
+    modelHash: "Model hash",
+    model: "Model",
+    version: "Version",
+}
 
+// Values that are always used are stored from the beginning
 const controlNetKeyMapping = {
     module: "Module",
     model: "Model",
@@ -32,7 +44,7 @@ type PngInfoObject = {
     size: string,
     modelHash: string,
     model: string,
-    loraHashes: Array<LoraHash>,
+    loraHashes?: Array<LoraHash>,
     version: string,
     prompt: Array<string>,
     negativePrompt: Array<string>,
@@ -151,7 +163,7 @@ async function getInfotextJson(arrayBuffer: ArrayBuffer): Promise<PngInfoObject>
     return getPngInfoJson(infotext);
 }
 
-async function getPngInfoJson(infoString: string): Promise<PngInfoObject> {
+function getPngInfoJson(infoString: string): PngInfoObject {
     const lines = infoString.split("\n");
     let phase = 0;
     let prompt = "";
@@ -314,11 +326,45 @@ function convertToCamelCase(input: string): string {
     return keyMapping[input];
 }
 
+function convertInfotextToJson (infotext: string): PngInfoObject {
+    return getPngInfoJson(infotext);
+}
+
+function listPropertiesExcept(obj) {
+    let result = '';
+    for (const key in obj) {
+      if (key !== 'prompt' && key !== 'negativePrompt' && obj[key]) {
+        result += `${keyMapping[key]}: ${obj[key]}, `;
+      }
+    }
+
+    return result.slice(0, -2);
+  }
+
+function convertJsonToInfotext(json: PngInfoObject): string {
+    let infotext = json?.prompt.join(", ") || '';
+
+    if(!!json?.negativePrompt.length) {
+        infotext += '\n';
+        infotext += "Negative prompt: " + json?.negativePrompt.join(", ");
+    }
+
+    const otherKeyAndValues = listPropertiesExcept(json);
+    if(otherKeyAndValues) {
+        infotext += '\n';
+        infotext += otherKeyAndValues;
+    }
+
+    return infotext;
+}
+
 export {
     getPngInfo,
     getInfotext,
     getInfotextJson,
     getOriginalKeyNames,
+    convertInfotextToJson,
+    convertJsonToInfotext,
     PngInfoObject,
     OriginalKeyPngInfoObject,
     LoraHash,
