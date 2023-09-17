@@ -11,6 +11,20 @@ const keyMapping = {
     version: "Version",
 }
 
+// Values that are always used are stored from the beginning
+const controlNetKeyMapping = {
+    module: "Module",
+    model: "Model",
+    weight: "Weight",
+    resizeMode: "Resize Mode",
+    lowVram: "Low Vram",
+    processorRes: "Processor Res",
+    guidanceStart: "Guidance Start",
+    guidanceEnd: "Guidance End",
+    pixelPerfect: "Pixel Perfect",
+    controlMode: "Control Mode",
+}
+
 type LoraHash = {
     [key: string]: string
 }
@@ -36,12 +50,12 @@ type ControlNetInfoObject = {
     key: string, // ControlNet 0, ControlNet 1...
     module: string,
     model: string,
-    weight: string,
+    weight: number,
     resizeMode: string,
-    lowVram: string,
+    lowVram: boolean,
     processorRes: number,
-    guidanceStart: string,
-    guidanceEnd: string,
+    guidanceStart: number,
+    guidanceEnd: number,
     pixelPerfect: boolean,
     controlMode: string,
     // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
@@ -185,10 +199,9 @@ function getPngInfoJson(infoString: string): PngInfoObject {
                     while(controlNetMatch !== null) {
                         const controlNetKey = controlNetMatch[1].trim();
                         const controlNetValue = controlNetMatch[2].trim();
-
-                        if(controlNetKey === "Processor Res") {
+                        if(["Weight","Processor Res", "Guidance Start", "Guidance End"].includes(controlNetKey)) {
                             controlNetObj[convertToCamelCase(controlNetKey)] = Number(controlNetValue);
-                        } else if (controlNetKey === "Pixel Perfect") {
+                        } else if (["Low Vram", "Pixel Perfect"].includes(controlNetKey)) {
                             const jsBool = pythonBoolToJsBool(controlNetValue);
 
                             if(jsBool !== null) {
@@ -243,7 +256,30 @@ function convertInfotextToJson (infotext: string): PngInfoObject {
 function listPropertiesExcept(obj) {
     let result = '';
     for (const key in obj) {
-      if (key !== 'prompt' && key !== 'negativePrompt' && obj[key]) {
+      if(key === "controlNetList") {
+        const controlNetObjList =obj[key];
+        if (!controlNetObjList || !Array.isArray(controlNetObjList)){
+            continue;
+        }
+
+        for (const controlNetObj of controlNetObjList) {
+            const controlNetKey = controlNetObj.key;
+            delete controlNetObj.key;
+
+            const controlNetValueList = Object.keys(controlNetObj).map((key) => {
+                let controlNetValue = controlNetObj[key]
+
+                // true -> True, false -> False
+                if(["lowVram", "pixelPerfect"].includes(key)) {
+                    controlNetValue = controlNetObj[key].toString().charAt(0).toUpperCase() + controlNetObj[key].toString().slice(1);
+                }
+
+                return `${controlNetKeyMapping[key]}: ${controlNetValue}`
+            });
+
+            result += `${controlNetKey}: "${controlNetValueList.join(', ')}", `
+        }
+      } else if (key !== 'prompt' && key !== 'negativePrompt' && obj[key]) {
         result += `${keyMapping[key]}: ${obj[key]}, `;
       }
     }

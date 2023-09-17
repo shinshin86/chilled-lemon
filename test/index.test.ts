@@ -74,7 +74,7 @@ describe('convertInfotextToJson', () => {
     it('should correctly convert infotext to json', () => {
         const infotext = `test, prompt
 Negative prompt: test, negative, prompt
-Steps: 20, Sampler: DPM++ 2M Karras, CFG scale: 7, Seed: 1234567890, Size: 512x512, Model hash: 6ce0161689, Model: v1-5-pruned-emaonly, Version: v1.6.0`;
+Steps: 20, Sampler: DPM++ 2M Karras, CFG scale: 7, Seed: 1234567890, Size: 512x512, Model hash: 6ce0161689, Model: v1-5-pruned-emaonly, ControlNet 0: "Module: dw_openpose_full, Model: control_v11p_sd15_openpose [12345678], Weight: 1, Resize Mode: Crop and Resize, Low Vram: False, Processor Res: 512, Guidance Start: 0, Guidance End: 1, Pixel Perfect: False, Control Mode: Balanced", ControlNet 1: "Module: dw_openpose_full, Model: control_v11p_sd15_openpose [12345678], Weight: 1, Resize Mode: Crop and Resize, Low Vram: False, Processor Res: 512, Guidance Start: 0, Guidance End: 1, Pixel Perfect: False, Control Mode: Balanced", Version: v1.6.0, `;
         const json = convertInfotextToJson(infotext);
 
         expect(Array.isArray(json.prompt)).toBe(true);
@@ -96,6 +96,35 @@ Steps: 20, Sampler: DPM++ 2M Karras, CFG scale: 7, Seed: 1234567890, Size: 512x5
         expect(json.modelHash).toBe('6ce0161689');
         expect(json.model).toBe('v1-5-pruned-emaonly');
         expect(json.version).toBe('v1.6.0');
+
+        expect(json.controlNetList?.length).toBe(2);
+        if(Array.isArray(json.controlNetList)) {
+            const controlNetObj0 =  json.controlNetList[0];
+            expect(controlNetObj0?.key).toBe("ControlNet 0");
+            expect(controlNetObj0?.module).toBe("dw_openpose_full");
+            expect(controlNetObj0?.model).toBe("control_v11p_sd15_openpose [12345678]");
+            expect(controlNetObj0?.weight).toBe(1);
+            expect(controlNetObj0?.resizeMode).toBe("Crop and Resize");
+            expect(controlNetObj0?.lowVram).toBe(false);
+            expect(controlNetObj0?.processorRes).toBe(512);
+            expect(controlNetObj0?.guidanceStart).toBe(0);
+            expect(controlNetObj0?.guidanceEnd).toBe(1);
+            expect(controlNetObj0?.pixelPerfect).toBe(false);
+            expect(controlNetObj0?.controlMode).toBe("Balanced");
+
+            const controlNetObj1 =  json.controlNetList[1];
+            expect(controlNetObj1?.key).toBe("ControlNet 1");
+            expect(controlNetObj1?.module).toBe("dw_openpose_full");
+            expect(controlNetObj1?.model).toBe("control_v11p_sd15_openpose [12345678]");
+            expect(controlNetObj1?.weight).toBe(1);
+            expect(controlNetObj1?.resizeMode).toBe("Crop and Resize");
+            expect(controlNetObj1?.lowVram).toBe(false);
+            expect(controlNetObj1?.processorRes).toBe(512);
+            expect(controlNetObj1?.guidanceStart).toBe(0);
+            expect(controlNetObj1?.guidanceEnd).toBe(1);
+            expect(controlNetObj1?.pixelPerfect).toBe(false);
+            expect(controlNetObj1?.controlMode).toBe("Balanced");
+        }
     })
 })
 
@@ -112,6 +141,34 @@ describe('convertJsonToInfotext', () => {
             modelHash: "6ce0161689",
             model: "v1-5-pruned-emaonly",
             version: "v1.6.0",
+            controlNetList: [
+                {
+                    key: 'ControlNet 0',
+                    module: 'dw_openpose_full',
+                    model: 'control_v11p_sd15_openpose [12345678]',
+                    weight: 1,
+                    resizeMode: 'Crop and Resize',
+                    lowVram: false,
+                    processorRes: 512,
+                    guidanceStart: 0,
+                    guidanceEnd: 1,
+                    pixelPerfect: false,
+                    controlMode: 'Balanced'
+                  },
+                  {
+                    key: 'ControlNet 1',
+                    module: 'dw_openpose_full',
+                    model: 'control_v11p_sd15_openpose [12345678]',
+                    weight: 1,
+                    resizeMode: 'Crop and Resize',
+                    lowVram: false,
+                    processorRes: 512,
+                    guidanceStart: 0,
+                    guidanceEnd: 1,
+                    pixelPerfect: false,
+                    controlMode: 'Balanced'
+                  }
+            ]
         }
 
         const infotext = convertJsonToInfotext(json);
@@ -119,10 +176,9 @@ describe('convertJsonToInfotext', () => {
         const lines = infotext.split('\n');
         expect(lines.length).toBe(3);
 
-
         const expectedInfotext = `test, prompt
 Negative prompt: test, negative, prompt
-Steps: 20, Sampler: DPM++ 2M Karras, CFG scale: 7, Seed: 1234567890, Size: 512x512, Model hash: 6ce0161689, Model: v1-5-pruned-emaonly, Version: v1.6.0`;
-        expect(infotext).toBe(expectedInfotext);
+Steps: 20, Sampler: DPM++ 2M Karras, CFG scale: 7, Seed: 1234567890, Size: 512x512, Model hash: 6ce0161689, Model: v1-5-pruned-emaonly, Version: v1.6.0, ControlNet 0: "Module: dw_openpose_full, Model: control_v11p_sd15_openpose [12345678], Weight: 1, Resize Mode: Crop and Resize, Low Vram: False, Processor Res: 512, Guidance Start: 0, Guidance End: 1, Pixel Perfect: False, Control Mode: Balanced", ControlNet 1: "Module: dw_openpose_full, Model: control_v11p_sd15_openpose [12345678], Weight: 1, Resize Mode: Crop and Resize, Low Vram: False, Processor Res: 512, Guidance Start: 0, Guidance End: 1, Pixel Perfect: False, Control Mode: Balanced"`;
+        expect(infotext).toEqual(expectedInfotext);
     })
 })
