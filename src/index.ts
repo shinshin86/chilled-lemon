@@ -51,13 +51,13 @@ type ControlNetInfoObject = {
     module: string,
     model: string,
     weight: number,
-    resizeMode: string,
+    resizeMode: "Just Resize" | "Crop and Resize" | "Resize and Fill",
     lowVram: boolean,
     processorRes: number,
     guidanceStart: number,
     guidanceEnd: number,
     pixelPerfect: boolean,
-    controlMode: string,
+    controlMode: "Balanced" | "My prompt is more important" | "ControlNet is more important",
     // Because there are a myriad of keys depending on the functionality provided, we allow arbitrary properties
     [key: string]: any,
 }
