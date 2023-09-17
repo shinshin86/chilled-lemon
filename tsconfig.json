@@ -1,17 +1,16 @@
 {
-    "compilerOptions": {
-      "target": "ES2020",
-      "module": "ESNext",
-      "declaration": true,
-      "outDir": "./temp",
-      "moduleResolution": "node",
-      "esModuleInterop": true,
-    },
-    "include": [
-      "src/**/*.ts"
-    ],
-    "exclude": [
-      "node_modules"
-    ]
-  }
-  
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "declaration": true,
+    "outDir": "./temp",
+    "moduleResolution": "node",
+    "esModuleInterop": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
