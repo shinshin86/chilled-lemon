@@ -79,8 +79,8 @@ function pythonBoolToJsBool(str: string): boolean | null {
     : null;
 }
 
-async function getInfotext(arrayBuffer: ArrayBuffer): Promise<string> {
-  const buffer = new Uint8Array(arrayBuffer);
+async function getInfotext(buf: ArrayBuffer | Buffer): Promise<string> {
+  const buffer = new Uint8Array(buf);
   const fileSignature = buffer.slice(0, 8);
 
   const pngSignature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -131,9 +131,9 @@ async function getInfotext(arrayBuffer: ArrayBuffer): Promise<string> {
 }
 
 async function getInfotextJson(
-  arrayBuffer: ArrayBuffer,
+  buf: ArrayBuffer | Buffer,
 ): Promise<PngInfoObject> {
-  const infotext = await getInfotext(arrayBuffer);
+  const infotext = await getInfotext(buf);
 
   return getPngInfoJson(infotext);
 }
