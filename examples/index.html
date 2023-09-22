@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="/node_modules/chilled-lemon/dist/index.umd.js"></script>
+</head>
+
+<body>
+    <input type="file" id="inputFile" />
+    <button onclick="getPngInfoFromFile()">Get PNG Info</button>
+    <pre id="output"></pre>
+
+    <script>
+        const { getInfotext, getInfotextJson } = window.ChilledLemon;
+
+        async function getPngInfoFromFile() {
+            const fileInput = document.getElementById('inputFile');
+            const file = fileInput.files[0];
+            const arrayBuffer = await file.arrayBuffer();
+
+            try {
+                const outputElement = document.getElementById('output');
+
+                const infotext = await getInfotext(arrayBuffer);
+                outputElement.textContent += '\n\n===PNG INFO (infotext format)===\n' + infotext;
+
+                const json = await getInfotextJson(arrayBuffer);
+                outputElement.textContent += '\n\n===PNG INFO (JSON format)===\n' + JSON.stringify(json);
+            } catch (err) {
+                console.error(`Error reading file: ${err.message}`);
+            }
+        }
+    </script>
+</body>
+
+</html>

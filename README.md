@@ -11,7 +11,8 @@ It also provides functions to mutually convert between infotext and JSON formats
 
 ## Usage（extract infotext in PNG images)
 
-You can use `getInfotext` or `getInfotextJson` to extract infotext embedded in PNG images.
+You can use `getInfotext` or `getInfotextJson` to extract infotext embedded in PNG images.  
+An example of the code can also be found [here](./examples/)
 
 Support `CJS/ESM/UMD`
 

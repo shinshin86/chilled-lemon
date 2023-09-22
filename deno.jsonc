@@ -1,6 +1,7 @@
 {
   "fmt": {
     "include": [
+      "examples",
       "src",
       "test",
       "deno.jsonc",
